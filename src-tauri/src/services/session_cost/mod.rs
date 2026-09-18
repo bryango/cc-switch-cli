@@ -116,7 +116,9 @@ pub(crate) fn project_page(
             Ok(db) => {
                 let result = (|| {
                     let conn = lock_conn!(db.conn);
-                    conn.busy_timeout(std::time::Duration::from_millis(250))?;
+                    // The schema probe gets the 250 ms wait.
+                    // Later SQLite operations must fail fast instead of waiting again.
+                    conn.busy_timeout(std::time::Duration::ZERO)?;
                     conn.pragma_update(None, "query_only", true)?;
                     control.install_progress_handler(&conn);
                     let result = project_main_connection(&conn, &main_identities, control);
